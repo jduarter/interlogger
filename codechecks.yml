@@ -1,0 +1,8 @@
+checks:
+  - name: typecov
+    options:
+      atLeast: 95
+      speculativeBranchSelection: false
+      tsconfigPath: ./tsconfig.json
+      files:
+        -path: "./src/**.{t,j}sx?"

@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": "src",
+    "declaration": true,
+    "declarationDir": "types/",
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "allowJs": true,
+    "checkJs": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "typeRoots": ["./node_modules/@types"],
+    "lib": ["esnext"],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "noImplicitReturns": true,
+    "noImplicitUseStrict": false,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "alwaysStrict": true,
+    "strictFunctionTypes": true,
+    "noUnusedParameters": true,
+    "noStrictGenericChecks": false,
+    "importsNotUsedAsValues": "error",
+    "forceConsistentCasingInFileNames": true,
+    "target": "es6",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true
+  },
+  "include": ["src/"],
+  "exclude": ["tests/", "docs/", "coverage-ts/", "build/", "types/", "node_modules/"],
+  "typedocOptions": {
+    "entryPoints": ["src/index.ts"],
+    "out": "docs/"
+  }
+}
