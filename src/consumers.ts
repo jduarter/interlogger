@@ -107,9 +107,12 @@ export const consumersMountAll = <
 export const consumersUmountAll = async (
   consumers: RenderedConsumer<any>[],
 ): Promise<boolean> =>
-  consumers
-    .map(async (consumer) => {
-      if (consumer.umount) {
+  (
+    await Promise.all(
+      consumers.map(async (consumer) => {
+        if (!consumer.umount) {
+          return true;
+        }
         try {
           await consumer.umount();
           return true;
@@ -117,6 +120,6 @@ export const consumersUmountAll = async (
           console.error('getPublicLogEventFn/init:', err);
           return false;
         }
-      }
-    })
-    .filter((x) => !x).length === 0;
+      }),
+    )
+  ).filter((x) => !x).length === 0;
