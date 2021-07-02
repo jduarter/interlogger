@@ -1,5 +1,8 @@
 export * from './types';
 
+export { ConsoleConsumer } from './Consumers/Console';
+export { FlipperConsumer } from './Consumers/Flipper';
+
 import type { LoggerType } from './types';
 
 import {
