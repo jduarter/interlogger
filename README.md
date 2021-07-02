@@ -1,5 +1,6 @@
 # interlogger
-[![CodeQL](https://github.com/jduarter/interlogger/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)](https://github.com/jduarter/interlogger/actions/workflows/codeql-analysis.yml)
+
+[![NPM](https://img.shields.io/npm/v/interlogger)](https://github.com/jduarter/interlogger)
 [![type-coverage](https://img.shields.io/badge/dynamic/json.svg?label=type-coverage&prefix=%E2%89%A5&suffix=%&query=$.typeCoverage.atLeast&uri=https%3A%2F%2Fraw.githubusercontent.com%2Fjduarter%2Finterlogger%2Fmaster%2Fpackage.json)](https://github.com/jduarter/interlogger)
 <a href="https://codeclimate.com/github/jduarter/interlogger/maintainability"><img src="https://api.codeclimate.com/v1/badges/b2d14de2ab2bfc28a5f6/maintainability" /></a>
 
@@ -11,9 +12,53 @@ Warning: This project is on pre-release stage. Using it in production might not 
 
 ### Install as `depedency`
 
-Install: 
+Install:
+
 ```
 npm install --save interlogger
+```
+
+### Implementation example
+
+```
+import { addPlugin as flipperPlugin } from 'react-native-flipper';
+
+import {
+  initMainScopeLogger,
+  FlipperConsumer,
+  ConsoleConsumer,
+} from 'interlogger';
+
+import type { Consumer } from 'interlogger';
+
+const LOG_CONSUMERS: Consumer[] = [
+  ConsoleConsumer,
+  FlipperConsumer({
+    flipperPlugin,
+  }),
+];
+
+export const initLoggers = (): void => {
+  initMainScopeLogger({
+    consumers: LOG_CONSUMERS,
+    rules: ({ doesNotMatch }) => ({
+      any: [
+        {
+          all: [
+          /* Log if:
+           *   consumer.name != 'Flipper' &&
+           *   scope != 'useGeneratorQueue'
+           */
+            doesNotMatch('$.consumer.name', 'Flipper'),
+            doesNotMatch('$.scope', 'useGeneratorQueue'),
+          ],
+        },
+      ],
+    }),
+  });
+};
+
+export { loggerForScope } from 'interlogger';
 ```
 
 ## License.
