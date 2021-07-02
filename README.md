@@ -42,17 +42,13 @@ export const initLoggers = (): void => {
   initMainScopeLogger({
     consumers: LOG_CONSUMERS,
     rules: ({ doesNotMatch }) => ({
-      any: [
-        {
-          all: [
+      all: [
           /* Log if:
            *   consumer.name != 'Flipper' &&
            *   scope != 'useGeneratorQueue'
            */
-            doesNotMatch('$.consumer.name', 'Flipper'),
-            doesNotMatch('$.scope', 'useGeneratorQueue'),
-          ],
-        },
+        doesNotMatch('$.consumer.name', 'Flipper'),
+        doesNotMatch('$.scope', 'useGeneratorQueue'),
       ],
     }),
   });
