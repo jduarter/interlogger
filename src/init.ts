@@ -12,7 +12,7 @@ import type {
 import {
   addLoggingRules,
   fact,
-  LogRulesEngine,
+  RulesEngine,
   withRulePatchHandlers,
   withRuleCheck,
 } from './rules';
@@ -35,16 +35,14 @@ export const DEFAULT_CONFIG: ConfigType = {
 
 const _mainScopeLoggerRef: { current: null | RefType } = { current: null };
 
-export const mainScopeEntries = (): [string, MultiplexedFnType][] =>
-  Object.entries(_mainScopeLoggerRef?.current?.loggers || {});
-
 export const getNewLoggers = (config: ConfigType): RefType => {
   const initializedConsumers = consumersMountAll(config);
 
-  addLoggingRules(
-    LogRulesEngine,
-    config.rules(withRulePatchHandlers({ fact })),
-  );
+  const rules = config.rules(withRulePatchHandlers({ fact }));
+
+  const LogRulesEngine = new RulesEngine();
+
+  addLoggingRules(LogRulesEngine, rules);
 
   const getLogFn = (
     initialState: Pick<LogEventState, 'levelName'>,
@@ -52,7 +50,7 @@ export const getNewLoggers = (config: ConfigType): RefType => {
     getPublicLogEventFn(
       initializedConsumers.map((ic) => ({
         ...ic,
-        handler: withRuleCheck(initialState, (s) =>
+        handler: withRuleCheck(LogRulesEngine, initialState, (s) =>
           ic.handler({ ...initialState, ...s }),
         ),
       })),
@@ -70,25 +68,35 @@ export const getNewLoggers = (config: ConfigType): RefType => {
   return { loggers, consumers: initializedConsumers };
 };
 
-export const initMainScopeLogger = (config: ConfigType): LoggerType => {
-  if (_mainScopeLoggerRef.current?.loggers) {
-    return _mainScopeLoggerRef.current?.loggers;
+export const initMainScopeLogger = (
+  config: ConfigType,
+  overwrite: boolean = false,
+): LoggerType => {
+  if (_mainScopeLoggerRef.current?.loggers && !overwrite) {
+    return _mainScopeLoggerRef.current.loggers;
   }
-  _mainScopeLoggerRef.current = getNewLoggers(config);
-  return _mainScopeLoggerRef.current?.loggers;
+
+  const newLoggers = getNewLoggers(config);
+
+  _mainScopeLoggerRef.current = newLoggers;
+  return _mainScopeLoggerRef.current.loggers;
 };
 
 export const destroyMainScopeLogger = async (): Promise<boolean> => {
-  await consumersUmountAll(_mainScopeLoggerRef.current?.consumers || []);
+  if (!_mainScopeLoggerRef.current?.loggers) {
+    return true;
+  }
+
+  consumersUmountAll(_mainScopeLoggerRef.current?.consumers || []);
   _mainScopeLoggerRef.current = null;
+
   return true;
 };
 
-export const withMainScopeReady =
-  (fn: GenericFn): GenericFn =>
-  (...args: any[]) => {
+export const withMainScopeReady = <T extends unknown = GenericFn>(fn: any): T =>
+  ((...args: any[]) => {
     if (!_mainScopeLoggerRef.current) {
       initMainScopeLogger(DEFAULT_CONFIG);
     }
-    return fn(...args);
-  };
+    return fn(_mainScopeLoggerRef)(...args);
+  }) as T;

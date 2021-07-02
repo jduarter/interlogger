@@ -86,7 +86,10 @@ export interface ConfigType {
 
 export type LogLevelStrings = keyof typeof LOG_LEVELS;
 
-export type LoggerType = Record<LogLevelStrings, MultiplexedFnType>;
+export type LoggerType = Record<
+  LogLevelStrings,
+  LogToLevelFnType /*MultiplexedFnType*/
+>;
 
 export type OnSuccessFnType = (
   state: LogEventState,

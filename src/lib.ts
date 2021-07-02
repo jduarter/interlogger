@@ -1,25 +1,25 @@
 import {
   withMainScopeReady,
-  mainScopeEntries,
   initMainScopeLogger,
-  destroyMainScopeLogger
+  destroyMainScopeLogger,
 } from './init';
 
 import { forwardArgsToFn } from './consumers';
 
-import type {LoggerType} from './types';
+import type { LoggerType, MultiplexedFnType } from './types';
 
-export const loggerForScope = withMainScopeReady(
-  (scope: string): LoggerType =>
-    mainScopeEntries().reduce(
-      (acc, [currName, currFn]) => ({
+type LoggerForScopeFn = (scope: string) => LoggerType;
+
+export const loggerForScope = withMainScopeReady<LoggerForScopeFn>(
+  (instance: any) => (scope: string) =>
+    Object.entries<MultiplexedFnType>(instance?.current?.loggers || {}).reduce(
+      (acc, [currName, currFn]: [string, MultiplexedFnType]) => ({
         ...acc,
         [currName]: forwardArgsToFn((state) => currFn({ ...state, scope })),
       }),
       {} as LoggerType,
     ),
 );
-
 
 export { ConsoleConsumer } from './Consumers/Console';
 export { FlipperConsumer } from './Consumers/Flipper';

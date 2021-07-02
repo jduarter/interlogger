@@ -1,6 +1,5 @@
 const { Engine } = require('json-rules-engine');
-
-export const LogRulesEngine = new Engine();
+export { Engine as RulesEngine };
 
 import type {
   OnSuccessFnType,
@@ -12,7 +11,7 @@ import type {
 export const fact: FactType = (obj) => ({ fact: 'logEvent', ...obj });
 
 export const addLoggingRules = (
-  engine: typeof LogRulesEngine,
+  engine: any, // @todo-type
   conditions: Record<string, any>,
 ): void =>
   engine.addRule({
@@ -25,7 +24,7 @@ export const addLoggingRules = (
 export const eventToRulesEngine = async <
   S extends OnSuccessFnType = OnSuccessFnType,
 >(
-  engine: typeof LogRulesEngine,
+  engine: any, // @todo-type
   logEvent: LogEventState,
   onSuccess: S,
 ): Promise<boolean> => {
@@ -60,8 +59,12 @@ export const withRulePatchHandlers = ({
   return { fact, match, doesNotMatch };
 };
 
-export const withRuleCheck =
-  (initialState: Partial<LogEventState>, eventHandleFn: OnSuccessFnType) =>
+export const withRuleCheck = 
+  (
+    LogRulesEngine: any /*@todo-type*/,
+    initialState: Partial<LogEventState>,
+    eventHandleFn: OnSuccessFnType,
+  ) =>
   (obj: Partial<LogEventState>): ReturnType<typeof eventToRulesEngine> =>
     eventToRulesEngine(
       LogRulesEngine,

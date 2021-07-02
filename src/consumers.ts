@@ -87,6 +87,7 @@ export const consumersMountAll = <
 >(
   config: ConfigType,
 ): RC[] => {
+  console.log('consumersMountAll called: ', config);
   const initializedConsumers: RC[] = [];
 
   for (const consumer of getConsumersForConfig<O>(config)) {
