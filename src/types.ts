@@ -89,3 +89,5 @@ export type OnSuccessFnType = (
 export type MultiplexedFnType = (
   state: LogEventStateFromPublic & Pick<LogEventState, 'scope'>,
 ) => Promise<boolean[]>;
+
+export type GenericFn = (...a: any[]) => any;

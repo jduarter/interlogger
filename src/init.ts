@@ -5,6 +5,7 @@ import type {
   LogEventState,
   MultiplexedFnType,
   ConfigType,
+  GenericFn,
 } from './types';
 
 import {
@@ -68,8 +69,6 @@ export const initMainScopeLogger = (config: ConfigType): LoggerType => {
   _mainScopeLoggerRef.current = getNewLoggers(config);
   return _mainScopeLoggerRef.current;
 };
-
-type GenericFn = (...a: any[]) => any;
 
 export const withMainScopeReady =
   (fn: GenericFn): GenericFn =>
