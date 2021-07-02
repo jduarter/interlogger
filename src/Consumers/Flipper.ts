@@ -46,7 +46,7 @@ export const FlipperConsumer: FlipperConsumerType = ({ flipperPlugin }) => {
       const flipperConfig = {
         runInBackground: () => true,
         getId() {
-          return 'flipper-plugin-native-genesis-logger';
+          return 'flipper-plugin-interlogger';
         },
         onConnect,
         onDisconnect,
