@@ -10,7 +10,7 @@ import type {
   RenderedMultiplexedMember,
 } from './types';
 
-import { logEventState } from './init';
+import { logEventState } from './utils';
 
 export const enumKeys = <
   O extends Record<string, any>,

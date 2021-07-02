@@ -1,4 +1,6 @@
-import { LogRulesEngine } from './init';
+const { Engine } = require('json-rules-engine');
+
+export const LogRulesEngine = new Engine();
 
 import type {
   OnSuccessFnType,
