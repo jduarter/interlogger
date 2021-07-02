@@ -97,3 +97,8 @@ export type MultiplexedFnType = (
 ) => Promise<boolean[]>;
 
 export type GenericFn = (...a: any[]) => any;
+
+export type RefType = {
+  loggers: LoggerType;
+  consumers: RenderedConsumer<any>[];
+};
