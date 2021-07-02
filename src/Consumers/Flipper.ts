@@ -20,7 +20,6 @@ const flipperConsumerHandler =
       eventName,
       message: state.message,
       data,
-
       time: Date.now(),
     };
 
