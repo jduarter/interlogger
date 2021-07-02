@@ -1,7 +1,7 @@
 {
   "name": "interlogger",
   "version": "0.0.1",
-  "description": "the definitive Open Source solution for proper logging regardless of your environment.",
+  "description": "The definitive Open Source solution for proper logging regardless of your environment",
   "typeCoverage": {
     "atLeast": 90
   },
@@ -20,7 +20,7 @@
     "react-native",
     "react",
     "native",
-    "node"
+    "node",
     "sentry",
     "rules",
     "log",

@@ -2,19 +2,25 @@ import { ConsoleConsumer } from './Consumers/Console';
 
 const { Engine } = require('json-rules-engine');
 
-import type { LoggerType, ConfigType, LogEventState } from './types';
+import type {
+  LoggerType,
+  LogEventState,
+  MultiplexedFnType,
+  ConfigType,
+} from './types';
 
 import {
   addLoggingRules,
   fact,
   withRulePatchHandlers,
-  //withRuleCheck,
+  withRuleCheck,
 } from './rules';
 
 import { LOG_LEVELS } from './constants';
 import { consumersMountAll, enumKeys, getPublicLogEventFn } from './consumers';
 
-const NOOP = () => {};
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const NOOP: MultiplexedFnType = () => Promise.resolve([true]);
 
 export const Logger = (obj: Partial<LoggerType> = {}): LoggerType => ({
   ...obj,
@@ -28,7 +34,9 @@ export const Logger = (obj: Partial<LoggerType> = {}): LoggerType => ({
 });
 
 export const logEventState = (
-  obj: Partial<LogEventState> = {},
+  obj: Partial<LogEventState> &
+    Pick<LogEventState, 'levelName'> = {} as Partial<LogEventState> &
+    Pick<LogEventState, 'levelName'>,
 ): LogEventState => ({
   ...obj,
   levelName: obj?.levelName || '',
@@ -41,7 +49,7 @@ export const logEventState = (
 
 export const LogRulesEngine = new Engine();
 
-export const DEFAULT_CONFIG = {
+export const DEFAULT_CONFIG: ConfigType = {
   consumers: [ConsoleConsumer],
   rules: () => {
     console.warn('LogService: WARNING: USING DEFAULT CONFIG');
@@ -51,42 +59,34 @@ export const DEFAULT_CONFIG = {
 
 const _mainScopeLoggerRef: { current: null | LoggerType } = { current: null };
 
-export const mainScopeEntries = () =>
+export const mainScopeEntries = (): [string, MultiplexedFnType][] =>
   Object.entries(_mainScopeLoggerRef?.current || {});
 
 export const getNewLoggers = (config: ConfigType): LoggerType => {
-  console.log('----> getNewLoggers');
   const initializedConsumers = consumersMountAll(config);
 
   addLoggingRules(
     LogRulesEngine,
-    config.rules({ fact, ...withRulePatchHandlers({ fact }) }),
+    config.rules(withRulePatchHandlers({ fact })),
   );
 
-  const precomputedFn = (state: LogEventState) =>
+  const getLogFn = (
+    initialState: Pick<LogEventState, 'levelName'>,
+  ): MultiplexedFnType =>
     getPublicLogEventFn(
-      initializedConsumers,
-      logEventState({
-        ...state,
-      }),
+      initializedConsumers.map((ic) => ({
+        ...ic,
+        handler: withRuleCheck(initialState, (s) =>
+          ic.handler({ ...initialState, ...s }),
+        ),
+      })),
+      initialState,
     );
 
   const loggers = enumKeys(LOG_LEVELS).reduce(
-    (acc, currName) => ({
+    (acc, levelName) => ({
       ...acc,
-      [currName]: (state: LogEventState) => {
-        console.log('+++ logger.' + currName);
-        return precomputedFn({ ...state, levelName: currName });
-      } /*withRuleCheck(currName, (eventName, data) =>
-        getPublicLogEventFn(
-          initializedConsumers,
-          logEventState({
-            levelName: currName,
-            eventName,
-            data,
-          }),
-        ),
-      ),*/,
+      [levelName]: getLogFn({ levelName }),
     }),
     {} as LoggerType,
   );
@@ -95,16 +95,17 @@ export const getNewLoggers = (config: ConfigType): LoggerType => {
 };
 
 export const initMainScopeLogger = (config: ConfigType): LoggerType => {
-  console.log('*** initMainScopeLogger');
   _mainScopeLoggerRef.current = getNewLoggers(config);
-  return _mainScopeLoggerRef.current as LoggerType;
+  return _mainScopeLoggerRef.current;
 };
 
-export const withMainScopeReady = (fn: Function): Function => {
-  return (...args: any[]) => {
+type GenericFn = (...a: any[]) => any;
+
+export const withMainScopeReady =
+  (fn: GenericFn): GenericFn =>
+  (...args: any[]) => {
     if (!_mainScopeLoggerRef.current) {
       initMainScopeLogger(DEFAULT_CONFIG);
     }
     return fn(...args);
   };
-};

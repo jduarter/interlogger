@@ -5,14 +5,12 @@ import type { Consumer, LogEventState } from '../types';
 export const CONSOLE_CONSUMER_NAME = 'Console';
 
 const consoleConsumerHandler = (state: LogEventState) => {
-  const {
-    levelName,
-    message,
-    data: { scope, event, ...restOfdata },
-  } = state;
+  const { levelName, eventName, scope, message, data } = state;
 
-  console.log('STATE IS: ', state);
-  console[levelName]('[' + scope + '] ' + event + ': ' + message, restOfdata);
+  // eslint-disable-next-line security/detect-object-injection
+  console[levelName]('[' + scope + '] ' + eventName + ': ' + message, data);
+
+  return true;
 };
 
 type Options = Record<string, unknown>;

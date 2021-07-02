@@ -5,17 +5,23 @@ import type {
   LogToLevelFnType,
   FwArgsType,
   LogToLevelStateFn,
+  MultiplexedFnType,
+  LogEventStateFromPublic,
+  RenderedMultiplexedMember,
 } from './types';
 
 import { logEventState } from './init';
 
-export const enumKeys = <O extends object, K extends keyof O = keyof O>(
+export const enumKeys = <
+  O extends Record<string, any>,
+  K extends keyof O = keyof O,
+>(
   obj: O,
 ): K[] => Object.keys(obj).filter((k) => Number.isNaN(+k)) as K[];
 
 export const logToLevelArgsToState = (
   args: FwArgsType,
-): Partial<LogEventState> => {
+): Pick<LogEventState, 'message' | 'data' | 'eventName'> => {
   if (args.length === 2) {
     return {
       message: '',
@@ -29,100 +35,58 @@ export const logToLevelArgsToState = (
       eventName: args[0],
     };
   } else {
-    console.log('ARGS: ', args);
     throw new Error('forwardArgsToFn: Invalid arguments error');
   }
 };
-/*
-export const sendToConsumers = (
-  consumers: RenderedConsumer<any>[],
-  state: LogEventState,
-) => {
-  console.log('*** sendToConsumers');
-  for (const { handler, name } of consumers) {
-    try {
-      console.log('*** current mutated state is: ', {
-        ...state,
-        consumer: name,
-      });
-      handler({ ...state });
-    } catch (err) {
-      console.error('runWithHandlers: ERROR: ', err);
-    }
-  }
-};*/
 
 export const getConsumersForConfig = <O>(
   config: ConfigType,
   options: O = {} as O,
-) => config.consumers.map((consumer) => consumer(options));
-
-type MultiplexedFnType = (state: LogEventState) => Promise<void[]>;
-
-type RenderedMultiplexedMember = {
-  acb: (state: LogEventState) => Promise<void>;
-  consumer: RenderedConsumer<any>;
-};
+): RenderedConsumer<unknown>[] =>
+  config.consumers.map((consumer) => consumer(options));
 
 const multiplexEventForAllConsumers = (
   consumers: RenderedConsumer<any>[],
-  initialState: LogEventState,
+  initialState: Pick<LogEventState, 'levelName'>,
 ) =>
   consumers.map(
     (consumer: RenderedConsumer<any>): RenderedMultiplexedMember => ({
-      acb: async (state: LogEventState) => {
-        await consumer.handler({ ...initialState, ...state });
-        return;
-      },
+      acb: async (state) =>
+        consumer.handler(logEventState({ ...initialState, ...state })),
       consumer,
     }),
   );
 
 const getMainConsumerMultiplexFn = (
   consumers: RenderedConsumer<any>[],
-  initialState: LogEventState,
+  initialState: Pick<LogEventState, 'levelName'>,
 ): MultiplexedFnType => {
   const multiplexedMembers = multiplexEventForAllConsumers(
     consumers,
     initialState,
   );
 
-  const multiplexedMainFn: MultiplexedFnType = async (state: LogEventState) => {
-    console.log('multiplexedMainFn: starts');
-
-    const p = Promise.all(
-      multiplexedMembers.map(async ({ acb, consumer }) => {
-        console.log('MM: ', acb, consumer);
-
-        const rr = acb({ ...initialState, ...state, consumer });
-        console.log('RR: ', rr);
-        return rr;
-      }),
+  const multiplexedMainFn: MultiplexedFnType = async (
+    state: LogEventStateFromPublic,
+  ) =>
+    Promise.all(
+      multiplexedMembers.map(async ({ acb, consumer }) =>
+        acb({ ...initialState, ...state, consumer }),
+      ),
     );
-
-    console.log('multiplexedMainFn: ', p);
-    return p;
-  };
 
   return multiplexedMainFn;
 };
 
 export const getPublicLogEventFn = (
   consumers: RenderedConsumer<any>[],
-  initialState: LogEventState,
-): MultiplexedFnType => {
-  console.log('getPublicLogEventFn called', initialState);
-  const multiplexedFn = getMainConsumerMultiplexFn(consumers, initialState);
-  console.log('multiplexedFn: ', multiplexedFn);
-  return multiplexedFn;
-};
+  initialState: Pick<LogEventState, 'levelName'>,
+): MultiplexedFnType => getMainConsumerMultiplexFn(consumers, initialState);
 
 export const forwardArgsToFn =
   (fn: LogToLevelStateFn): LogToLevelFnType =>
-  (...args: FwArgsType) => {
-    const state = logToLevelArgsToState(args);
-    return fn(logEventState(state));
-  };
+  (...args: FwArgsType) =>
+    fn(logToLevelArgsToState(args));
 
 export const consumersMountAll = <
   O extends Record<string, unknown> = Record<string, any>,

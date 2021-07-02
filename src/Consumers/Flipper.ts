@@ -12,26 +12,22 @@ type FlipperConsumerType = (options: {
 
 const flipperConsumerHandler =
   (flipperConnection: any) => (state: LogEventState) => {
-    const {
-      event = '',
-      error = null,
-      scope = '(default)',
-      ...restOfdata
-    } = state.data;
+    const { eventName = '', scope = '(default)', data } = state;
 
     const payload: any = {
       scope,
       level: state.levelName,
-      event,
+      eventName,
       message: state.message,
-      data: restOfdata,
-      error,
+      data,
+
       time: Date.now(),
     };
 
     if (flipperConnection.current) {
       flipperConnection.current.send('action', payload);
     }
+    return true;
   };
 
 export const FlipperConsumer: FlipperConsumerType = ({ flipperPlugin }) => {

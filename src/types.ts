@@ -8,16 +8,18 @@ export type ConsumerTypes =
   | typeof CONSUMER_ANALYTICS_TYPE
   | typeof CONSUMER_ERROR_REPORTER_TYPE;
 
-export type LogEventState = {
-  levelName: '' | LogLevelStrings;
+export interface LogEventState {
+  levelName: LogLevelStrings;
   message: string;
   eventName: string;
   scope: string;
   data: LogToLevelDataType;
   consumer: null | RenderedConsumer<any>;
-};
+}
 
-export type LogServiceOptionsObjType = { __options?: Record<any, string> };
+export interface LogServiceOptionsObjType {
+  __options?: Record<any, string>;
+}
 
 export type LogToLevelDataType<O = Record<string, any>> = O &
   LogServiceOptionsObjType;
@@ -30,7 +32,16 @@ export type LogToLevelFnType = ((
   ((eventName: string, message: string, data: LogToLevelDataType) => void);
 
 // internal interface
-export type LogToLevelStateFn = (s: LogEventState) => void;
+
+export type AutohandledLogEventProperties = 'levelName' | 'scope' | 'consumer';
+
+export type LogEventStateFromPublic = Omit<
+  LogEventState,
+  AutohandledLogEventProperties
+>;
+export type LogToLevelStateFn = (
+  s: LogEventStateFromPublic,
+) => Promise<boolean[]>;
 
 export type FwArgsType =
   | [LogEventState['eventName'], LogToLevelDataType]
@@ -40,9 +51,16 @@ export interface RenderedConsumer<O = Record<string, any>> {
   options: O;
   type: ConsumerTypes;
   name: string;
-  handler: (state: LogEventState) => void;
+  handler: (state: LogEventState) => boolean | Promise<boolean>;
   mount?: () => void;
   umount?: () => void;
+}
+
+export interface RenderedMultiplexedMember {
+  acb: (
+    state: LogEventStateFromPublic & Pick<LogEventState, 'consumer'>,
+  ) => Promise<boolean>;
+  consumer: RenderedConsumer<any>;
 }
 
 export type Consumer<O = Record<string, any>> = (
@@ -53,6 +71,8 @@ export type RuleSet = Record<string, any>;
 
 export type FactType = (o: RuleSet) => RuleSet;
 
+export type RuleMatcher = (path: string, value: any) => RuleSet;
+
 export interface ConfigType {
   consumers: Consumer[];
   rules: ({ fact }: { fact: FactType }) => RuleSet;
@@ -60,9 +80,12 @@ export interface ConfigType {
 
 export type LogLevelStrings = keyof typeof LOG_LEVELS;
 
-export type LoggerType = Record<LogLevelStrings, LogToLevelFnType>;
+export type LoggerType = Record<LogLevelStrings, MultiplexedFnType>;
 
-export type OnSuccessFnType = <D = Record<string, any>>(
-  eventName: string,
-  data: D,
-) => void;
+export type OnSuccessFnType = (
+  state: LogEventState,
+) => boolean | Promise<boolean>;
+
+export type MultiplexedFnType = (
+  state: LogEventStateFromPublic & Pick<LogEventState, 'scope'>,
+) => Promise<boolean[]>;
