@@ -10,12 +10,14 @@ import type {
 import {
   addLoggingRules,
   fact,
+  LogRulesEngine,
   withRulePatchHandlers,
   withRuleCheck,
 } from './rules';
 
 import { LOG_LEVELS } from './constants';
-import { consumersMountAll, enumKeys, getPublicLogEventFn } from './consumers';
+import { consumersMountAll, getPublicLogEventFn } from './consumers';
+import { enumKeys } from './utils';
 
 export const DEFAULT_CONFIG: ConfigType = {
   consumers: [ConsoleConsumer],

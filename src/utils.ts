@@ -1,7 +1,13 @@
 import type { LoggerType, LogEventState, MultiplexedFnType } from './types';
 
 import { LOG_LEVELS } from './constants';
-import { enumKeys } from './consumers';
+
+export const enumKeys = <
+  O extends Record<string, any>,
+  K extends keyof O = keyof O,
+>(
+  obj: O,
+): K[] => Object.keys(obj).filter((k) => Number.isNaN(+k)) as K[];
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const NOOP: MultiplexedFnType = () => Promise.resolve([true]);

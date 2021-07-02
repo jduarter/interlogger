@@ -12,13 +12,6 @@ import type {
 
 import { logEventState } from './utils';
 
-export const enumKeys = <
-  O extends Record<string, any>,
-  K extends keyof O = keyof O,
->(
-  obj: O,
-): K[] => Object.keys(obj).filter((k) => Number.isNaN(+k)) as K[];
-
 export const logToLevelArgsToState = (
   args: FwArgsType,
 ): Pick<LogEventState, 'message' | 'data' | 'eventName'> => {
