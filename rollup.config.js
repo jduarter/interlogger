@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import dts from 'rollup-plugin-dts';
 import { terser } from 'rollup-plugin-terser';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
 import analyze from 'rollup-plugin-analyzer';
 import license from 'rollup-plugin-license';
@@ -19,24 +20,21 @@ export default [
   {
     input: 'src/index.ts',
     output: [
-      { file: 'build/interlogger.js', format: 'cjs' },
-      {
-        file: 'build/interlogger.min.js',
-        format: 'cjs',
-        plugins: [terser()],
-      },
-      { file: 'build/interlogger.esm.js', format: 'esm' },
+      { file: 'build/lib.js', format: 'cjs' },
+      { file: 'build/lib.min.js', format: 'cjs', plugins: [terser()] },
+      { file: 'build/lib.esm.js', format: 'esm' },
     ],
     plugins: [
       typescript(),
       cleanup({ comments: 'none' }),
+      nodeResolve(),
       license(LICENSE_CFG),
       analyze(),
     ],
   },
   {
-    input: 'src/types.ts',
-    output: [{ file: 'build/interlogger.d.ts', format: 'es' }],
+    input: 'src/index.ts',
+    output: [{ file: 'build/lib.d.ts', format: 'es' }],
     plugins: [
       dts(),
       cleanup({ comments: 'none' }),
@@ -45,3 +43,4 @@ export default [
     ],
   },
 ];
+
