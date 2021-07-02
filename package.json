@@ -1,6 +1,6 @@
 {
   "name": "interlogger",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "The definitive Open Source solution for proper logging regardless of your environment",
   "typeCoverage": {
     "atLeast": 94.87
