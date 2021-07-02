@@ -2,6 +2,7 @@ import {
   withMainScopeReady,
   mainScopeEntries,
   initMainScopeLogger,
+  destroyMainScopeLogger
 } from './init';
 
 import { forwardArgsToFn } from './consumers';
@@ -22,4 +23,4 @@ export const loggerForScope = withMainScopeReady(
 
 export { ConsoleConsumer } from './Consumers/Console';
 export { FlipperConsumer } from './Consumers/Flipper';
-export { withMainScopeReady, initMainScopeLogger };
+export { withMainScopeReady, initMainScopeLogger, destroyMainScopeLogger };
