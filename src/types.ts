@@ -73,9 +73,15 @@ export type FactType = (o: RuleSet) => RuleSet;
 
 export type RuleMatcher = (path: string, value: any) => RuleSet;
 
+export type RuleHandlers = {
+  match: RuleMatcher;
+  doesNotMatch: RuleMatcher;
+  fact: FactType;
+};
+
 export interface ConfigType {
   consumers: Consumer[];
-  rules: ({ fact }: { fact: FactType }) => RuleSet;
+  rules: (handlers: RuleHandlers) => RuleSet;
 }
 
 export type LogLevelStrings = keyof typeof LOG_LEVELS;

@@ -6,7 +6,7 @@ import type {
   OnSuccessFnType,
   FactType,
   LogEventState,
-  RuleMatcher,
+  RuleHandlers,
 } from './types';
 
 export const fact: FactType = (obj) => ({ fact: 'logEvent', ...obj });
@@ -42,7 +42,7 @@ export const withRulePatchHandlers = ({
   fact,
 }: {
   fact: FactType;
-}): { match: RuleMatcher; doesNotMatch: RuleMatcher; fact: FactType } => {
+}): RuleHandlers => {
   const match = (path: string, value: any) =>
     fact({
       path,
