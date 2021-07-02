@@ -71,6 +71,9 @@ export const getNewLoggers = (config: ConfigType): RefType => {
 };
 
 export const initMainScopeLogger = (config: ConfigType): LoggerType => {
+  if (_mainScopeLoggerRef.current?.loggers) {
+    return _mainScopeLoggerRef.current?.loggers;
+  }
   _mainScopeLoggerRef.current = getNewLoggers(config);
   return _mainScopeLoggerRef.current?.loggers;
 };
