@@ -1,6 +1,6 @@
 {
   "name": "interlogger",
-  "version": "0.0.13",
+  "version": "0.0.15",
   "typeCoverage": {
     "atLeast": 94.87
   },
