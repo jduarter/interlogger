@@ -12,13 +12,15 @@ type LoggerForScopeFn = (scope: string) => LoggerType;
 
 export const loggerForScope = withMainScopeReady<LoggerForScopeFn>(
   (instance: any) => (scope: string) =>
-    Object.entries<MultiplexedFnType>(instance?.current?.loggers || {}).reduce(
-      (acc, [currName, currFn]: [string, MultiplexedFnType]) => ({
-        ...acc,
-        [currName]: forwardArgsToFn((state) => currFn({ ...state, scope })),
-      }),
-      {} as LoggerType,
-    ),
+    instance?.current?.loggers
+      ? Object.entries<MultiplexedFnType>(instance.current.loggers).reduce(
+          (acc, [currName, currFn]: [string, MultiplexedFnType]) => ({
+            ...acc,
+            [currName]: forwardArgsToFn((state) => currFn({ ...state, scope })),
+          }),
+          {} as LoggerType,
+        )
+      : {},
 );
 
 export { ConsoleConsumer } from './Consumers/Console';

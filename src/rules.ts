@@ -59,7 +59,7 @@ export const withRulePatchHandlers = ({
   return { fact, match, doesNotMatch };
 };
 
-export const withRuleCheck = 
+export const withRuleCheck =
   (
     LogRulesEngine: any /*@todo-type*/,
     initialState: Partial<LogEventState>,

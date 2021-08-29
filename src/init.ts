@@ -7,6 +7,8 @@ import type {
   ConfigType,
   GenericFn,
   RefType,
+  RenderedConsumer,
+  InterloggerPlugin,
 } from './types';
 
 import {
@@ -31,36 +33,44 @@ export const DEFAULT_CONFIG: ConfigType = {
     console.warn('LogService: WARNING: USING DEFAULT CONFIG');
     return { any: [] };
   },
+  plugins: [],
 };
 
 const _mainScopeLoggerRef: { current: null | RefType } = { current: null };
 
+const getLogFn = (
+  initialState: Pick<LogEventState, 'levelName'>,
+  LogRulesEngine: any,
+  initializedConsumers: RenderedConsumer<unknown>[],
+  plugins: InterloggerPlugin[],
+): MultiplexedFnType =>
+  getPublicLogEventFn(
+    initializedConsumers.map((ic) => ({
+      ...ic,
+      handler: withRuleCheck(LogRulesEngine, initialState, (s) =>
+        ic.handler({ ...initialState, ...s }),
+      ),
+    })),
+    initialState,
+    plugins,
+  );
+
 export const getNewLoggers = (config: ConfigType): RefType => {
   const initializedConsumers = consumersMountAll(config);
-
   const rules = config.rules(withRulePatchHandlers({ fact }));
-
   const LogRulesEngine = new RulesEngine();
 
   addLoggingRules(LogRulesEngine, rules);
 
-  const getLogFn = (
-    initialState: Pick<LogEventState, 'levelName'>,
-  ): MultiplexedFnType =>
-    getPublicLogEventFn(
-      initializedConsumers.map((ic) => ({
-        ...ic,
-        handler: withRuleCheck(LogRulesEngine, initialState, (s) =>
-          ic.handler({ ...initialState, ...s }),
-        ),
-      })),
-      initialState,
-    );
-
   const loggers = enumKeys(LOG_LEVELS).reduce(
     (acc, levelName) => ({
       ...acc,
-      [levelName]: getLogFn({ levelName }),
+      [levelName]: getLogFn(
+        { levelName },
+        LogRulesEngine,
+        initializedConsumers,
+        config.plugins,
+      ),
     }),
     {} as LoggerType,
   );

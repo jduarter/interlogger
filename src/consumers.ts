@@ -8,6 +8,7 @@ import type {
   MultiplexedFnType,
   LogEventStateFromPublic,
   RenderedMultiplexedMember,
+  InterloggerPlugin,
 } from './types';
 
 import { logEventState } from './utils';
@@ -50,31 +51,42 @@ const multiplexEventForAllConsumers = (
     }),
   );
 
-const getMainConsumerMultiplexFn = (
-  consumers: RenderedConsumer<any>[],
-  initialState: Pick<LogEventState, 'levelName'>,
-): MultiplexedFnType => {
-  const multiplexedMembers = multiplexEventForAllConsumers(
-    consumers,
-    initialState,
-  );
-
-  const multiplexedMainFn: MultiplexedFnType = async (
-    state: LogEventStateFromPublic,
-  ) =>
-    Promise.all(
-      multiplexedMembers.map(async ({ acb, consumer }) =>
-        acb({ ...initialState, ...state, consumer }),
-      ),
-    );
-
-  return multiplexedMainFn;
+const processPlugins = (
+  evData: LogEventStateFromPublic,
+  plugins: InterloggerPlugin[],
+): LogEventStateFromPublic => {
+  console.log('processPlugins: ', { evData, plugins });
+  return evData;
 };
+
+const withEvData = (
+  evData: LogEventStateFromPublic,
+  mpMembersFn: (evData: LogEventStateFromPublic) => Promise<boolean>[],
+  plugins: InterloggerPlugin[],
+) => Promise.all(mpMembersFn(processPlugins(evData, plugins)));
+
+const getMainConsumerMultiplexFn =
+  (
+    consumers: RenderedConsumer<any>[],
+    initialState: Pick<LogEventState, 'levelName'>,
+    plugins: InterloggerPlugin[],
+  ): MultiplexedFnType =>
+  async (state: LogEventStateFromPublic) =>
+    withEvData(
+      { ...initialState, ...state },
+      (evData: LogEventStateFromPublic) =>
+        multiplexEventForAllConsumers(consumers, initialState).map(
+          async ({ acb, consumer }) => acb({ ...evData, consumer }),
+        ),
+      plugins,
+    );
 
 export const getPublicLogEventFn = (
   consumers: RenderedConsumer<any>[],
   initialState: Pick<LogEventState, 'levelName'>,
-): MultiplexedFnType => getMainConsumerMultiplexFn(consumers, initialState);
+  plugins: InterloggerPlugin[] = [],
+): MultiplexedFnType =>
+  getMainConsumerMultiplexFn(consumers, initialState, plugins);
 
 export const forwardArgsToFn =
   (fn: LogToLevelStateFn): LogToLevelFnType =>
@@ -87,7 +99,6 @@ export const consumersMountAll = <
 >(
   config: ConfigType,
 ): RC[] => {
-  console.log('consumersMountAll called: ', config);
   const initializedConsumers: RC[] = [];
 
   for (const consumer of getConsumersForConfig<O>(config)) {
@@ -110,17 +121,16 @@ export const consumersUmountAll = async (
 ): Promise<boolean> =>
   (
     await Promise.all(
-      consumers.map(async (consumer) => {
-        if (!consumer.umount) {
-          return true;
-        }
-        try {
-          await consumer.umount();
-          return true;
-        } catch (err) {
-          console.error('getPublicLogEventFn/init:', err);
-          return false;
-        }
-      }),
+      consumers
+        .filter((c) => !!c.umount)
+        .map(async ({ umount = () => {} }) => {
+          try {
+            await umount();
+            return true;
+          } catch (err) {
+            console.error('getPublicLogEventFn/init:', err);
+            return false;
+          }
+        }),
     )
   ).filter((x) => !x).length === 0;

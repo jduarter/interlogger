@@ -82,14 +82,12 @@ export type RuleHandlers = {
 export interface ConfigType {
   consumers: Consumer[];
   rules: (handlers: RuleHandlers) => RuleSet;
+  plugins: InterloggerPlugin[];
 }
 
 export type LogLevelStrings = keyof typeof LOG_LEVELS;
 
-export type LoggerType = Record<
-  LogLevelStrings,
-  LogToLevelFnType /*MultiplexedFnType*/
->;
+export type LoggerType = Record<LogLevelStrings, LogToLevelFnType>;
 
 export type OnSuccessFnType = (
   state: LogEventState,
@@ -100,6 +98,23 @@ export type MultiplexedFnType = (
 ) => Promise<boolean[]>;
 
 export type GenericFn = (...a: any[]) => any;
+
+type PluginKindPreprocess = 1;
+
+export type InterloggerPlugginTypes = [PluginKindPreprocess];
+
+type PluginHandler = <
+  S extends LogEventStateFromPublic = LogEventStateFromPublic,
+  R extends S = S,
+>(
+  s: S,
+) => Promise<R>;
+
+export interface InterloggerPlugin {
+  name: string;
+  type: PluginKindPreprocess;
+  handle: PluginHandler;
+}
 
 export type RefType = {
   loggers: LoggerType;
