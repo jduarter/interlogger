@@ -56,7 +56,7 @@ const processPlugins = (
   plugins: InterloggerPlugin[],
 ): Promise<LogEventStateFromPublic> =>
   plugins.reduce(
-    async (acc, curr) => await curr.handle(await acc),
+    async (acc, curr) => curr.handle(await acc),
     Promise.resolve(evData),
   );
 
