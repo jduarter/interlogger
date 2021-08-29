@@ -99,9 +99,9 @@ export type MultiplexedFnType = (
 
 export type GenericFn = (...a: any[]) => any;
 
-type PluginKindPreprocess = 1;
-
-export type InterloggerPlugginTypes = [PluginKindPreprocess];
+export enum InterloggerPluginTypes {
+  PluginKindPreprocess,
+}
 
 type PluginHandler = <
   S extends LogEventStateFromPublic = LogEventStateFromPublic,
@@ -112,7 +112,7 @@ type PluginHandler = <
 
 export interface InterloggerPlugin {
   name: string;
-  type: PluginKindPreprocess;
+  type: InterloggerPluginTypes;
   handle: PluginHandler;
 }
 

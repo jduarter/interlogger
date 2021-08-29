@@ -54,16 +54,17 @@ const multiplexEventForAllConsumers = (
 const processPlugins = (
   evData: LogEventStateFromPublic,
   plugins: InterloggerPlugin[],
-): LogEventStateFromPublic => {
-  console.log('processPlugins: ', { evData, plugins });
-  return evData;
-};
+): Promise<LogEventStateFromPublic> =>
+  plugins.reduce(
+    async (acc, curr) => await curr.handle(await acc),
+    Promise.resolve(evData),
+  );
 
-const withEvData = (
+const withEvData = async (
   evData: LogEventStateFromPublic,
   mpMembersFn: (evData: LogEventStateFromPublic) => Promise<boolean>[],
   plugins: InterloggerPlugin[],
-) => Promise.all(mpMembersFn(processPlugins(evData, plugins)));
+) => Promise.all(mpMembersFn(await processPlugins(evData, plugins)));
 
 const getMainConsumerMultiplexFn =
   (
